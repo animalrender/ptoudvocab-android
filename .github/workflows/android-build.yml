@@ -1,0 +1,70 @@
+name: Android build
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build debug and release APKs
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify renderer is license-free
+        run: python3 scripts/strip-license.py
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Install Android SDK packages
+        run: |
+          # The ubuntu-latest image ships the Android SDK; install only what the build needs.
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          if [ ! -x "$SDKMANAGER" ]; then SDKMANAGER="$(command -v sdkmanager)"; fi
+          yes | "$SDKMANAGER" --licenses > /dev/null || true
+          "$SDKMANAGER" "platforms;android-35" "build-tools;35.0.0"
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.10.2"
+
+      - name: Build debug and release
+        id: build
+        run: |
+          set +e
+          gradle --no-daemon --stacktrace :app:assembleDebug :app:assembleRelease 2>&1 | tee "$RUNNER_TEMP/gradle.log"
+          status=${PIPESTATUS[0]}
+          if [ "$status" -ne 0 ]; then
+            # Surface the compiler and Gradle errors as check annotations so they can be read
+            # without downloading the raw job log.
+            grep -E "^e: |^w: .*error|What went wrong|Could not |Execution failed|FAILED|^> [^T]" "$RUNNER_TEMP/gradle.log" \
+              | head -80 | while IFS= read -r line; do echo "::error::${line//$'\r'/}"; done
+            exit "$status"
+          fi
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: ProudVocab-debug
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+
+      - name: Upload release APK (unsigned unless signing secrets are set)
+        uses: actions/upload-artifact@v4
+        with:
+          name: ProudVocab-release-build
+          path: app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
