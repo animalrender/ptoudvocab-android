@@ -723,7 +723,15 @@
         };
     }
 
-    if (!/^https?:/i.test(url)) return nativeFetch(input, init);
+    // Same-origin URLs (the bundled renderer itself, e.g. _locales) stay native;
+    // only cross-origin http(s) requests are proxied through the host.
+    let sameOrigin = false;
+    try {
+      sameOrigin = new URL(url, window.location.href).origin === window.location.origin;
+    } catch (e) {
+      sameOrigin = false;
+    }
+    if (!/^https?:/i.test(url) || sameOrigin) return nativeFetch(input, init);
 
 
     const headers = {};
