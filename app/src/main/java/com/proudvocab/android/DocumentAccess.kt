@@ -81,8 +81,7 @@ object DocumentAccess {
 
     /** Lists the video files directly inside a folder picked with OPEN_DOCUMENT_TREE. */
     fun listVideos(context: Context, folderVirtualPath: String): JSONObject {
-        val treeUri = contentUri(folderVirtualPath) ?: return failure("bad path")
-        val treeUriObj = Uri.parse(treeUri)
+        val treeUriObj = contentUri(folderVirtualPath) ?: return failure("bad path")
         val folderId = try {
             DocumentsContract.getTreeDocumentId(treeUriObj)
         } catch (e: IllegalArgumentException) {
@@ -117,8 +116,9 @@ object DocumentAccess {
         return JSONObject().put("ok", true).put("files", list)
     }
 
-    /** Opens a content URI from a virtual path (used by the media handler too). */
-    fun contentUri(virtualPath: String): String? = VirtualPaths.contentUriOf(virtualPath)
+    /** The content URI behind a virtual path, or null when the path is malformed. */
+    private fun contentUri(virtualPath: String): Uri? =
+        VirtualPaths.contentUriOf(virtualPath)?.let { Uri.parse(it) }
 
     private fun queryRow(context: Context, uri: Uri, columns: Array<String>): Array<String?>? = try {
         context.contentResolver.query(uri, columns, null, null, null)?.use { cursor ->

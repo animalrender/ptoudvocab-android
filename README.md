@@ -10,7 +10,7 @@ under `app/src/main/assets/web/`.
 
 ## Requirements
 
-- Android 9 (API 28) or newer. Built and checked for Poco X3 Pro (Android 11+, 1080×2400).
+- Android 9 (API 28) or newer. Target device: Poco X3 Pro (1080×2400). The app has not yet been run on that hardware; see "Status" below.
 - Permissions: `INTERNET` only. Videos and subtitles are opened through the system
   file picker (Storage Access Framework), so the app never asks for storage access.
 
@@ -70,3 +70,11 @@ The keystore is never committed. The release workflow reads four repository secr
 
 If a secret is missing, the release workflow stops with an error that names it.
 Keep the keystore backed up. Losing it means existing installs can never be updated.
+
+## Status
+
+- The renderer is verified headless (Chromium): the shell boots, the native bridge
+  works, locale files load and no license/premium code is loaded.
+- The Android project is verified by the GitHub Actions build (debug and release).
+- Not yet verified: on-device playback of HEVC/MKV, file picker flows and
+  fullscreen on a Poco X3 Pro.
