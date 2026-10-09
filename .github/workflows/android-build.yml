@@ -50,8 +50,8 @@ jobs:
           if [ "$status" -ne 0 ]; then
             # Surface the compiler and Gradle errors as check annotations so they can be read
             # without downloading the raw job log.
-            grep -E "^e: |What went wrong|Could not |Execution failed|^> " "$RUNNER_TEMP/gradle.log" \
-              | head -60 | while IFS= read -r line; do echo "::error::${line//$'\r'/}"; done
+            grep -E "^e: |^w: .*error|What went wrong|Could not |Execution failed|FAILED|^> [^T]" "$RUNNER_TEMP/gradle.log" \
+              | head -80 | while IFS= read -r line; do echo "::error::${line//$'\r'/}"; done
             exit "$status"
           fi
 
