@@ -105,3 +105,11 @@ body.panel-hidden #splitter{display:none}
   animation:spin .9s linear infinite;
 }
 @keyframes spin{to{transform:rotate(360deg)}}
+
+/* Phone width (Android): keep the top bar on one line. Secondary labels are
+   hidden, the icons and the fullscreen/panel controls stay. */
+@media (max-width: 600px) {
+  #topbar { gap: 6px; padding-left: 8px; padding-right: 8px; overflow: hidden; }
+  .brand-tag, .now-playing, .panel-status { display: none !important; }
+  #btn-panel > span { display: none; }
+}
